@@ -7,12 +7,16 @@ import android.os.Build;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class ApkInstaller {
 
@@ -22,50 +26,23 @@ public final class ApkInstaller {
     }
 
     public static LatestRelease checkLatest(String repo) throws Exception {
-        URL url = new URL(
+        String body = fetchApi(
             "https://api.github.com/repos/" + repo + "/releases/latest");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestProperty("Accept", "application/vnd.github+json");
-        conn.setRequestProperty("User-Agent",
-            BuildConfig.APP_NAME + "/" + BuildConfig.VERSION_NAME);
-        conn.setConnectTimeout(15000);
-        conn.setReadTimeout(30000);
 
-        try {
-            if (conn.getResponseCode() != 200) return null;
+        Matcher tagM = Pattern.compile(
+            "\"tag_name\"\\s*:\\s*\"([^\"]+)\"").matcher(body);
+        Matcher urlM = Pattern.compile(
+            "\"browser_download_url\"\\s*:\\s*\"([^\"]+\\.apk)\"").matcher(body);
 
-            BufferedReader reader = new BufferedReader(
-                new InputStreamReader(conn.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) sb.append(line);
-            reader.close();
-
-            String json = sb.toString();
-            LatestRelease release = new LatestRelease();
-            release.tag = extractJsonString(json, "tag_name");
-
-            int searchFrom = 0;
-            while (true) {
-                int idx = json.indexOf("browser_download_url", searchFrom);
-                if (idx < 0) break;
-                String u = extractJsonString(
-                    json.substring(idx), "browser_download_url");
-                if (u != null && u.endsWith(".apk")) {
-                    release.apkUrl = u;
-                    break;
-                }
-                searchFrom = idx + 1;
-            }
-            return release;
-        } finally {
-            conn.disconnect();
-        }
+        LatestRelease release = new LatestRelease();
+        if (tagM.find()) release.tag = tagM.group(1);
+        if (urlM.find()) release.apkUrl = urlM.group(1);
+        return release;
     }
 
     public static int compareVersions(String a, String b) {
-        String cleanA = a.replaceFirst("^[vV]", "");
-        String cleanB = b.replaceFirst("^[vV]", "");
+        String cleanA = a == null ? "" : a.replaceFirst("^[vV]", "");
+        String cleanB = b == null ? "" : b.replaceFirst("^[vV]", "");
         String[] partsA = cleanA.split("\\.");
         String[] partsB = cleanB.split("\\.");
         int len = Math.max(partsA.length, partsB.length);
@@ -79,10 +56,11 @@ public final class ApkInstaller {
 
     public static File download(Context ctx, String apkUrl) throws Exception {
         File out = new File(ctx.getCacheDir(), "update.apk");
-        URL url = new URL(apkUrl);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        HttpURLConnection conn = (HttpURLConnection)
+            new URL(apkUrl).openConnection();
         conn.setConnectTimeout(15000);
         conn.setReadTimeout(60000);
+        conn.setInstanceFollowRedirects(true);
 
         try (InputStream in = new BufferedInputStream(conn.getInputStream());
              FileOutputStream fos = new FileOutputStream(out)) {
@@ -134,19 +112,32 @@ public final class ApkInstaller {
         ctx.startActivity(intent);
     }
 
-    private static String extractJsonString(String json, String key) {
-        String search = "\"" + key + "\"";
-        int idx = json.indexOf(search);
-        if (idx < 0) return null;
-        int start = json.indexOf('"', idx + search.length() + 1);
-        if (start < 0) return null;
-        int end = json.indexOf('"', start + 1);
-        if (end < 0) return null;
-        return json.substring(start + 1, end);
+    private static String fetchApi(String apiUrl) throws IOException {
+        HttpURLConnection c = (HttpURLConnection)
+            new URL(apiUrl).openConnection();
+        c.setRequestProperty("User-Agent", "AppTemplate/1.0");
+        c.setRequestProperty("Accept", "application/vnd.github+json");
+        c.setConnectTimeout(15000);
+        c.setReadTimeout(30000);
+        c.setInstanceFollowRedirects(true);
+        try {
+            int code = c.getResponseCode();
+            if (code != 200)
+                throw new IOException("GitHub API HTTP " + code);
+            InputStream in = c.getInputStream();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = in.read(buf)) != -1) bos.write(buf, 0, n);
+            in.close();
+            return bos.toString("UTF-8");
+        } finally {
+            c.disconnect();
+        }
     }
 
     private static int parseIntSafe(String s) {
-        try { return Integer.parseInt(s); }
+        try { return Integer.parseInt(s.trim()); }
         catch (NumberFormatException e) { return 0; }
     }
 }
