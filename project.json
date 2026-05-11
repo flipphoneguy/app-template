@@ -1,0 +1,8 @@
+{
+    "package": "com.flipphoneguy.app",
+    "name": "App Template",
+    "min_sdk": 23,
+    "target_sdk": 35,
+    "repo": "flipphoneguy/app",
+    "github_profile": "https://github.com/flipphoneguy"
+}
