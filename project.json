@@ -3,6 +3,6 @@
     "name": "App Template",
     "min_sdk": 23,
     "target_sdk": 35,
-    "repo": "flipphoneguy/app",
+    "repo": "flipphoneguy/app-template",
     "github_profile": "https://github.com/flipphoneguy"
 }
