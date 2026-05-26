@@ -40,7 +40,8 @@ Output APK name is derived from the `name` field in `project.json` (spaces strip
 │   ├── drawable/           # Button/card/focus state drawables
 │   ├── layout/             # activity_main.xml, activity_info.xml
 │   ├── mipmap-anydpi-v26/  # Adaptive icon
-│   └── values/             # colors.xml, themes.xml, strings.xml
+│   ├── values/             # colors.xml, themes.xml, strings.xml
+│   └── values-night/       # Dark mode color/theme overrides
 ├── src/                    # Java source (package path)
 ├── libs/                   # Optional jars (auto-included in classpath)
 ├── tmp/                    # Scratch space (gitignored)
@@ -80,7 +81,9 @@ Version code formula: `major * 10000 + minor * 100 + patch`.
 ## What's included
 
 ### UI
-- Material Light theme, indigo color palette
+- Material Light theme with automatic dark mode support (follows system on Android 10+)
+- Manual theme toggle in the info screen (System Default / Light / Dark), persisted across restarts
+- Indigo color palette (light), dark neutral palette with emerald accents (dark)
 - Card-based layout with rounded corners
 - D-pad/keyboard focus support: declarative `nextFocusUp/Down` chains on all interactive elements, visible focus states (white border on buttons, indigo highlight on cards)
 
