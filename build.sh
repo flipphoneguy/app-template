@@ -113,5 +113,7 @@ apksigner sign \
     --out "${APK_NAME}.apk" \
     build/app_unsigned.apk
 
+rm -f "${APK_NAME}.apk.idsig"
+
 SIZE=$(du -h "${APK_NAME}.apk" | cut -f1)
 echo "=== done: ${APK_NAME}.apk ($SIZE) ==="
