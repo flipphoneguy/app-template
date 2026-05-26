@@ -2,6 +2,7 @@ package com.flipphoneguy.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -18,10 +19,21 @@ public class InfoActivity extends Activity {
     private Button btnUpdate;
     private TextView updateStatus;
 
+    private static final String[] THEME_LABELS = new String[3];
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(ThemeHelper.wrap(newBase));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info);
+
+        THEME_LABELS[ThemeHelper.MODE_SYSTEM] = getString(R.string.theme_system);
+        THEME_LABELS[ThemeHelper.MODE_LIGHT] = getString(R.string.theme_light);
+        THEME_LABELS[ThemeHelper.MODE_DARK] = getString(R.string.theme_dark);
 
         ((TextView) findViewById(R.id.info_app_name)).setText(BuildConfig.APP_NAME);
         ((TextView) findViewById(R.id.info_version)).setText("v" + BuildConfig.VERSION_NAME);
@@ -48,6 +60,16 @@ public class InfoActivity extends Activity {
         findViewById(R.id.btn_app_repo).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 openUrl(BuildConfig.GITHUB_PROFILE + "/" + repoName);
+            }
+        });
+
+        final Button btnTheme = (Button) findViewById(R.id.btn_theme);
+        btnTheme.setText(THEME_LABELS[ThemeHelper.getMode(this)]);
+        btnTheme.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                int next = (ThemeHelper.getMode(InfoActivity.this) + 1) % 3;
+                ThemeHelper.setMode(InfoActivity.this, next);
+                recreate();
             }
         });
     }

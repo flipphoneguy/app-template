@@ -22,4 +22,9 @@
     <string name="update_installing">Installing\u2026</string>
     <string name="update_install_failed">Install failed: %s</string>
     <string name="update_no_release">No release found</string>
+
+    <string name="info_theme_title">Theme</string>
+    <string name="theme_system">System Default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 </resources>
