@@ -98,15 +98,12 @@ Version code formula: `major * 10000 + minor * 100 + patch`.
 - 5-step pipeline: compile resources, link, compile Java, dex, package+sign
 - Jars in `libs/` are automatically added to the classpath and dexed
 
-## Install
+## Termux build-tool quirks
 
-```sh
-# via adb
-adb install -r AppTemplate.apk
+Things that will bite you when writing code against this template — none of these are obvious from error messages.
 
-# on-device
-cp AppTemplate.apk /sdcard/ && pm install -r /sdcard/AppTemplate.apk
-```
+- **`ecj` wrapper hardcodes `-7`** (Java 7 compliance). Adding `-source`/`-target`/`-1.8` to your build invocation produces `duplicate compliance setting`. If you need a different language level, edit the wrapper script or invoke `ecj.jar` directly.
+- **`d8` only accepts class major version ≤ 55** (Java 11). A library jar compiled with Java 17 (major 61) or 21 (major 65) will fail dexing with `Unsupported class file major version`. Workaround: extract the jar and rewrite byte 7 of every `.class` file to `0x34` (Java 8 / major 52), then repack. As long as the library uses no post-Java-8 APIs at runtime, this works.
 
 ## License
 
